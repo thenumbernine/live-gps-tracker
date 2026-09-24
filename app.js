@@ -1,43 +1,43 @@
-let map;
-let marker;
+let map, marker;
 
-// Replace with your actual Render application URL after you deploy it
-const RENDER_API_URL = "https://onrender.com"; 
+// Get these from your Supabase Dashboard -> Project Settings -> API
+const SUPABASE_URL = "https://supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; 
+const DEVICE_ID = "truck_01"; // The device you want to map
 
 function initMap() {
-    // 1. Initialize the map layer centered globally
     map = L.map('map').setView([0, 0], 2);
 
-    // 2. Load the OpenStreetMap background graphics
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // 3. Place an initial marker on the map
     marker = L.marker([0, 0]).addTo(map);
 
-    // 4. Run the first execution and set a 10-second routine loop
     fetchLocation();
-    setInterval(fetchLocation, 10000); 
+    setInterval(fetchLocation, 10000); // Poll Supabase every 10 seconds
 }
 
 async function fetchLocation() {
     try {
-        const response = await fetch(RENDER_API_URL);
+        // Query Supabase directly using its built-in REST API!
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/locations?device_id=eq.${DEVICE_ID}&select=lat,lng`, {
+            headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
         const data = await response.json();
-        
-        if (data.lat && data.lng) {
-            const pos = [data.lat, data.lng];
-            
-            // Move marker seamlessly and focus the camera frame
+
+        if (data && data.length > 0) {
+            const pos = [data[0].lat, data[0].lng];
             marker.setLatLng(pos);
             map.panTo(pos);
         }
     } catch (err) {
-        console.error("Error communicating with Render API:", err);
+        console.error("Error pulling data directly from Supabase:", err);
     }
 }
 
-// Ensure layout maps don't initialize until the window finishes painting
 window.onload = initMap;
