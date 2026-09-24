@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>High-Traffic Live Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com" />
+    <script src="https://unpkg.com"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #map { height: 100vh; width: 100vw; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        let map, marker;
+        // REPLACE THIS with your actual Render URL later
+        const RENDER_API_URL = "https://onrender.com"; 
+
+        function initMap() {
+            map = L.map('map').setView([0, 0], 2);
+
+            // Using standard OSM tiles (Good for testing; use a CDN for massive production)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            marker = L.marker([0, 0]).addTo(map);
+            
+            // Poll Render every 3 seconds
+            setInterval(fetchLocation, 3000);
+            fetchLocation(); // Initial call
+        }
+
+        async function fetchLocation() {
+            try {
+                const response = await fetch(RENDER_API_URL);
+                const data = await response.json();
+                
+                if (data.lat && data.lng) {
+                    const pos = [data.lat, data.lng];
+                    marker.setLatLng(pos);
+                    map.panTo(pos);
+                }
+            } catch (err) {
+                console.error("Error connecting to Render API:", err);
+            }
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
